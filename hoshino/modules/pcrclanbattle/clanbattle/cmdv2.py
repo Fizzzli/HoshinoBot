@@ -14,6 +14,9 @@ import asyncio
 from datetime import datetime, timedelta
 from typing import List
 from matplotlib import pyplot as plt
+
+import hoshino
+
 try:
     import ujson as json
 except:
@@ -700,32 +703,40 @@ async def stat_damage(bot:NoneBot, ctx:Context_T, args:ParseResult):
     pre_sum_dmg = [
         [ s[3][b] for s in stat ] for b in range(6)
     ]
+    sv.logger.info(f"{stat}\n{pre_sum_dmg}")
 
-    # generate statistic figure
-    fig, ax = plt.subplots()
-    fig.set_size_inches(10, y_size)
-    ax.set_title(f"{clan['name']}{yyyy}年{mm}月会战伤害统计")
-    ax.set_yticks(y_pos)
-    ax.set_yticklabels(name)
-    ax.set_ylim((-0.6, yn - 0.4))
-    ax.invert_yaxis()
-    ax.set_xlabel('伤害')
-    colors = ['#00a2e8', '#22b14c', '#b5e61d', '#fff200', '#ff7f27', '#ed1c24']
-    bars = [ ax.barh(y_pos, pre_sum_dmg[b], align='center', color=colors[b]) for b in range(5, -1, -1) ]
-    bars.reverse()
-    ax.ticklabel_format(axis='x', style='plain')
-    for b in range(1, 6):
-        for i, rect in enumerate(bars[b]):
-            x = (rect.get_width() + bars[b - 1][i].get_width()) / 2
-            y = rect.get_y() + rect.get_height() / 2
-            d = pre_sum_dmg[b][i] - pre_sum_dmg[b - 1][i]
-            if d > unit:
-                ax.text(x, y, f'{d/unit:.0f}{unit_str}', ha='center', va='center')
-    plt.subplots_adjust(left=0.12, right=0.96, top=1 - 0.35 / y_size, bottom=0.55 / y_size)
-    pic = util.fig2b64(plt)
-    plt.close()
-    
-    msg = f"{ms.image(pic)}\n※分数统计请发送“!分数统计”"
+    if hoshino.config.USE_CQPRO:
+        # generate statistic figure
+        fig, ax = plt.subplots()
+        fig.set_size_inches(10, y_size)
+        ax.set_title(f"{clan['name']}{yyyy}年{mm}月会战伤害统计")
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(name)
+        ax.set_ylim((-0.6, yn - 0.4))
+        ax.invert_yaxis()
+        ax.set_xlabel('伤害')
+        colors = ['#00a2e8', '#22b14c', '#b5e61d', '#fff200', '#ff7f27', '#ed1c24']
+        bars = [ ax.barh(y_pos, pre_sum_dmg[b], align='center', color=colors[b]) for b in range(5, -1, -1) ]
+        bars.reverse()
+        ax.ticklabel_format(axis='x', style='plain')
+        for b in range(1, 6):
+            for i, rect in enumerate(bars[b]):
+                x = (rect.get_width() + bars[b - 1][i].get_width()) / 2
+                y = rect.get_y() + rect.get_height() / 2
+                d = pre_sum_dmg[b][i] - pre_sum_dmg[b - 1][i]
+                if d > unit:
+                    ax.text(x, y, f'{d/unit:.0f}{unit_str}', ha='center', va='center')
+        plt.subplots_adjust(left=0.12, right=0.96, top=1 - 0.35 / y_size, bottom=0.55 / y_size)
+        pic = util.fig2b64(plt)
+        plt.close()
+
+        msg = f"{ms.image(pic)}\n※分数统计请发送“!分数统计”"
+    else:
+        msg = f"{clan['name']}{yyyy}年{mm}月会战伤害统计\n"
+        msg += "id|b1|b2|b3|b4|b5|total\n"
+        msg += f"\n".join(
+            map(lambda entry: f"{entry[2]}|" + f"|".join(
+                map(lambda i: f"{entry[3][i] - entry[3][i - 1]:,d}", range(1, 6))) + f"|{entry[3][-1]:,d}", stat))
     await bot.send(ctx, msg, at_sender=True)
 
 
