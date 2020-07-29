@@ -348,7 +348,7 @@ class SubscribeData:
         if 'max' not in data or len(data['max']) != 6:
             data['max'] = [99, 6, 6, 6, 6, 6]
         self._data = data
-        
+
     @staticmethod
     def default():
         return SubscribeData({
@@ -357,13 +357,13 @@ class SubscribeData:
             'tree':[], 'lock':[],
             'max': [99, 6, 6, 6, 6, 6]
         })
-    
+
     def get_sub_list(self, boss:int):
         return self._data[str(boss)]
-        
+
     def get_memo_list(self, boss:int):
         return self._data[f'm{boss}']
-    
+
     def get_tree_list(self):
         return self._data['tree']
 
@@ -386,13 +386,13 @@ class SubscribeData:
 
     def add_tree(self, uid:int):
         self._data['tree'].append(uid)
-        
+
     def clear_tree(self):
         self._data['tree'].clear()
-        
+
     def get_lock_info(self):
         return self._data['lock']
-    
+
     def set_lock(self, uid:int, ts):
         self._data['lock'] = [ (uid, ts) ]
 
@@ -473,16 +473,16 @@ async def unsubscribe(bot:NoneBot, ctx:Context_T, args:ParseResult):
     _check_member(bm, uid, bm.group)
     sub = _load_sub(bm.group)
     boss = args['']
-    boss_name = bm.int2kanji(boss)    
+    boss_name = bm.int2kanji(boss)
     slist = sub.get_sub_list(boss)
     mlist = sub.get_memo_list(boss)
-    limit = sub.get_sub_limit(boss)    
+    limit = sub.get_sub_limit(boss)
     if uid not in slist:
         raise NotFoundError(f'您没有预约{boss_name}王')
     sub.remove_sub(boss, uid)
     _save_sub(sub, bm.group)
     msg = [ f'\n已为您取消预约{boss_name}王！' ]
-    msg.append(f'=== 当前队列 {len(slist)}/{limit} ===')    
+    msg.append(f'=== 当前队列 {len(slist)}/{limit} ===')
     msg.extend(_gen_namelist_text(bm, slist, mlist))
     await bot.send(ctx, '\n'.join(msg), at_sender=True)
 
@@ -564,7 +564,7 @@ async def set_subscribe_limit(bot:NoneBot, ctx, args:ParseResult):
     if not (0 < limit <= 30):
         raise ClanBattleError('预约上限只能为1~30内的整数')
     sub = _load_sub(bm.group)
-    sub.set_sub_limit(args.B, limit)    
+    sub.set_sub_limit(args.B, limit)
     _save_sub(sub, bm.group)
     await bot.send(ctx, f'{bm.int2kanji(args.B)}王预约上限已设置为：{limit}')
 
@@ -735,8 +735,10 @@ async def stat_damage(bot:NoneBot, ctx:Context_T, args:ParseResult):
         msg = f"{clan['name']}{yyyy}年{mm}月会战伤害统计\n"
         msg += "id|b1|b2|b3|b4|b5|total\n"
         msg += f"\n".join(
-            map(lambda entry: f"{entry[2]}|" + f"|".join(
-                map(lambda i: f"{entry[3][i] - entry[3][i - 1]:,d}", range(1, 6))) + f"|{entry[3][-1]:,d}", stat))
+            map(lambda entry: f"{entry[2]}" + "\t|" + f"\t|".join(
+                map(lambda i: f"{entry[3][i] - entry[3][i - 1]:,d}".ljust(10, " "),
+                    range(1, 6))) + f"\t|{entry[3][-1]:,d}",
+                stat))
     await bot.send(ctx, msg, at_sender=True)
 
 
@@ -748,7 +750,7 @@ async def stat_score(bot:NoneBot, ctx:Context_T, args:ParseResult):
     yyyy, mm, _ = bm.get_yyyymmdd(now)
     stat = bm.stat_score(1, now)
     stat.sort(key=lambda x: x[3], reverse=True)
-    
+
     if not len(stat):
         await bot.send(ctx, f"{clan['name']}{yyyy}年{mm}月会战统计数据为空", at_sender=True)
         return
